@@ -2,7 +2,14 @@
 
 **Smart Contract Rugpull Detection** powered by ML-based intent–behavior deviation analysis.
 
-Upload a Solidity (`.sol`) smart contract and get an instant rugpull risk assessment using a 3-layer MLP neural network trained on 3,300+ verified contracts.
+PragmaGuard provides an instant rugpull risk assessment for Solidity (`.sol`) smart contracts using a 3-layer MLP neural network trained on 3,300+ verified contracts.
+
+## Key Features
+
+1. **Upload File**: Analyze a local `.sol` file.
+2. **Paste Code**: Paste raw Solidity source code directly into the UI.
+3. **Fetch Address**: Instantly fetch and analyze verified source code from Etherscan, BscScan, or PolygonScan using a contract address. Instantly flags unverified contracts as High Risk.
+4. **Professional UI**: Premium dark theme interface built with Next.js and Lucide React icons.
 
 ## Architecture
 
@@ -10,6 +17,7 @@ Upload a Solidity (`.sol`) smart contract and get an instant rugpull risk assess
 Frontend (Next.js :3000)  →  API Proxy  →  Backend (FastAPI :8000)
                                               ├── pipeline.py     (SBERT + regex features)
                                               ├── model_loader.py (MLP3Layer inference)
+                                              ├── etherscan.py    (API V2 Client)
                                               └── models/
                                                     ├── mlp_best_model.pt  (Tier-2 MLP)
                                                     └── scaler.joblib      (StandardScaler)
@@ -17,14 +25,14 @@ Frontend (Next.js :3000)  →  API Proxy  →  Backend (FastAPI :8000)
 
 ## How It Works
 
-1. **Upload** a `.sol` file through the web UI
-2. **Extract** NatSpec comments and function signatures (intent text)
-3. **Embed** intent text with Sentence-BERT (`all-MiniLM-L6-v2`) → 384-d vector
-4. **Detect** 14 behavioral heuristic flags via regex patterns
-5. **Assemble** a 398-dimensional feature vector
-6. **Normalize** features using a fitted `StandardScaler`
-7. **Classify** with the Tier-2 MLP (`398→256→128→1`, BatchNorm, Dropout)
-8. **Return** rugpull probability, confidence level, and flag breakdown
+1. **Input**: Supply a contract via Upload, Paste, or Block Explorer Fetch.
+2. **Extract**: Extract NatSpec comments and function signatures (intent text).
+3. **Embed**: Embed intent text with Sentence-BERT (`all-MiniLM-L6-v2`) → 384-d vector.
+4. **Detect**: Detect 14 behavioral heuristic flags via regex patterns.
+5. **Assemble**: Construct a 398-dimensional feature vector.
+6. **Normalize**: Normalize features using a fitted `StandardScaler`.
+7. **Classify**: Classify with the Tier-2 MLP (`398→256→128→1`, BatchNorm, Dropout).
+8. **Return**: Return rugpull probability, confidence level, and detailed flag breakdown.
 
 ## Model Performance
 
@@ -38,15 +46,25 @@ Frontend (Next.js :3000)  →  API Proxy  →  Backend (FastAPI :8000)
 
 ## Quick Start
 
-### Backend
+### 1. Backend Setup
 
 ```bash
 cd backend
 pip install -r requirements.txt
+```
+
+**Environment Variables:**
+Create a `.env` file in the `backend/` directory to enable the **Fetch Address** feature:
+```env
+ETHERSCAN_API_KEY=your_etherscan_api_key_here
+```
+
+Start the backend:
+```bash
 python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Frontend
+### 2. Frontend Setup
 
 ```bash
 cd frontend
@@ -69,19 +87,10 @@ Requires the dataset NPZ file from the [Intent-Behavior Deviation Dataset](https
 
 ## Tech Stack
 
-- **Backend:** FastAPI, PyTorch, Sentence-Transformers, scikit-learn
-- **Frontend:** Next.js (App Router), vanilla CSS
+- **Backend:** FastAPI, PyTorch, Sentence-Transformers, scikit-learn, Requests
+- **Frontend:** Next.js (App Router), Vanilla CSS, Lucide-React
 - **Model:** 3-layer MLP neural network (398→256→128→1)
 - **Embeddings:** Sentence-BERT (`all-MiniLM-L6-v2`)
-
-## Where to Find .sol Files
-
-Download verified Solidity source code from block explorers:
-- [Etherscan](https://etherscan.io) (Ethereum)
-- [BscScan](https://bscscan.com) (BNB Chain)
-- [PolygonScan](https://polygonscan.com) (Polygon)
-
-Navigate to any contract → **Contract** tab → **Contract Source Code**.
 
 ## Dataset
 
