@@ -83,10 +83,15 @@ async def predict_contract(file: UploadFile = File(...)):
 
 
 from pydantic import BaseModel
+from etherscan import fetch_source_code
 
 class ContractText(BaseModel):
     source_code: str
     filename: str = "pasted_contract.sol"
+
+class ContractAddress(BaseModel):
+    address: str
+    network: str = "ethereum"
 
 @app.post("/api/predict_text")
 async def predict_contract_text(contract: ContractText):
@@ -113,6 +118,49 @@ async def predict_contract_text(contract: ContractText):
 
     return {
         "filename":       contract.filename,
+        "prediction":     result["label"],
+        "probability":    round(result["prob"], 4),
+        "confidence":     result["confidence"],
+        "behavior_flags": features["behavior_flags"],
+        "intent_snippet": features["intent_text"][:500],
+        "model_used":     result["model_used"],
+    }
+
+@app.post("/api/predict_address")
+async def predict_contract_address(contract: ContractAddress):
+    """
+    Fetch verified source code from a block explorer and receive a rugpull risk assessment.
+    """
+    try:
+        source_code = fetch_source_code(contract.address, contract.network)
+    except ValueError as e:
+        error_msg = str(e)
+        if "NOT VERIFIED" in error_msg:
+            # High risk! We don't even need ML for this.
+            return {
+                "filename": f"{contract.address} ({contract.network})",
+                "prediction": "rugpull",
+                "probability": 0.9999,
+                "confidence": "high",
+                "behavior_flags": {},
+                "intent_snippet": f"🚨 {error_msg}",
+                "model_used": "Heuristic (Unverified)",
+            }
+        raise HTTPException(400, error_msg)
+    except Exception as e:
+        raise HTTPException(500, f"Failed to fetch source code: {str(e)}")
+
+    if len(source_code.encode("utf-8")) > MAX_FILE_SIZE:
+        raise HTTPException(400, "Fetched source code too large. Max 1 MB.")
+
+    # --- Run pipeline ---
+    features = run_pipeline(source_code)
+
+    # --- Run inference ---
+    result = predict(models, features)
+
+    return {
+        "filename":       f"{contract.address} ({contract.network})",
         "prediction":     result["label"],
         "probability":    round(result["prob"], 4),
         "confidence":     result["confidence"],
