@@ -82,6 +82,46 @@ async def predict_contract(file: UploadFile = File(...)):
     }
 
 
+from pydantic import BaseModel
+
+class ContractText(BaseModel):
+    source_code: str
+    filename: str = "pasted_contract.sol"
+
+@app.post("/api/predict_text")
+async def predict_contract_text(contract: ContractText):
+    """
+    Analyze raw pasted .sol text and receive a rugpull risk assessment.
+    """
+    source_code = contract.source_code
+
+    if len(source_code.encode("utf-8")) > MAX_FILE_SIZE:
+        raise HTTPException(400, "Text too large. Max 1 MB.")
+
+    # Basic sanity check — must look like Solidity
+    if not any(kw in source_code.lower() for kw in ["pragma solidity", "contract ", "interface ", "library "]):
+        raise HTTPException(
+            400,
+            "Text does not appear to be valid Solidity (no pragma/contract/interface found)."
+        )
+
+    # --- Run pipeline ---
+    features = run_pipeline(source_code)
+
+    # --- Run inference ---
+    result = predict(models, features)
+
+    return {
+        "filename":       contract.filename,
+        "prediction":     result["label"],
+        "probability":    round(result["prob"], 4),
+        "confidence":     result["confidence"],
+        "behavior_flags": features["behavior_flags"],
+        "intent_snippet": features["intent_text"][:500],
+        "model_used":     result["model_used"],
+    }
+
+
 @app.get("/api/health")
 def health():
     """Health check endpoint."""

@@ -124,6 +124,57 @@ function UploadZone({ file, setFile, onAnalyze, loading }) {
   );
 }
 
+/* ─────────── Paste Zone ─────────── */
+function PasteZone({ pastedCode, setPastedCode, onAnalyze, loading }) {
+  return (
+    <div className="glass-card">
+      <div className="paste-zone">
+        <textarea
+          className="code-textarea"
+          placeholder="Paste your Solidity source code here..."
+          value={pastedCode}
+          onChange={(e) => setPastedCode(e.target.value)}
+          disabled={loading}
+          spellCheck="false"
+        />
+      </div>
+
+      <button
+        className="btn-primary"
+        disabled={!pastedCode.trim() || loading}
+        onClick={onAnalyze}
+      >
+        {loading ? "Analyzing…" : "🔍 Analyze Code"}
+      </button>
+
+      <div className="guide-note">
+        <span className="guide-note-icon">💡</span>
+        <div className="guide-note-content">
+          <p className="guide-note-title">Where to find .sol files?</p>
+          <p className="guide-note-text">
+            You can copy verified Solidity source code from block explorers
+            such as{" "}
+            <a href="https://etherscan.io" target="_blank" rel="noopener noreferrer">
+              Etherscan
+            </a>
+            ,{" "}
+            <a href="https://bscscan.com" target="_blank" rel="noopener noreferrer">
+              BscScan
+            </a>
+            , or{" "}
+            <a href="https://polygonscan.com" target="_blank" rel="noopener noreferrer">
+              PolygonScan
+            </a>
+            . Navigate to any contract address, go to the{" "}
+            <strong>Contract</strong> tab, and look for the{" "}
+            <strong>Contract Source Code</strong> section. Copy the code and paste it here.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─────────── Behavior Grid ─────────── */
 const FLAG_LABELS = {
   owner_withdraw: "Owner Withdraw",
@@ -238,24 +289,39 @@ function ResultCard({ result, onReset }) {
 
 /* ─────────── Main Page ─────────── */
 export default function Home() {
+  const [inputMode, setInputMode] = useState("upload"); // "upload" | "paste"
   const [file, setFile] = useState(null);
+  const [pastedCode, setPastedCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
   const analyzeContract = async () => {
-    if (!file) return;
+    if (inputMode === "upload" && !file) return;
+    if (inputMode === "paste" && !pastedCode.trim()) return;
+
     setLoading(true);
     setError(null);
 
     try {
-      const form = new FormData();
-      form.append("file", file);
+      let res;
+      if (inputMode === "upload") {
+        const form = new FormData();
+        form.append("file", file);
 
-      const res = await fetch("/api/predict", {
-        method: "POST",
-        body: form,
-      });
+        res = await fetch("/api/predict", {
+          method: "POST",
+          body: form,
+        });
+      } else {
+        res = await fetch("/api/predict_text", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ source_code: pastedCode }),
+        });
+      }
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -273,6 +339,7 @@ export default function Home() {
 
   const reset = () => {
     setFile(null);
+    setPastedCode("");
     setResult(null);
     setError(null);
   };
@@ -294,12 +361,38 @@ export default function Home() {
       ) : result ? (
         <ResultCard result={result} onReset={reset} />
       ) : (
-        <UploadZone
-          file={file}
-          setFile={setFile}
-          onAnalyze={analyzeContract}
-          loading={loading}
-        />
+        <div className="input-section">
+          <div className="tab-switcher">
+            <button
+              className={`tab-btn ${inputMode === "upload" ? "active" : ""}`}
+              onClick={() => setInputMode("upload")}
+            >
+              Upload File
+            </button>
+            <button
+              className={`tab-btn ${inputMode === "paste" ? "active" : ""}`}
+              onClick={() => setInputMode("paste")}
+            >
+              Paste Code
+            </button>
+          </div>
+          
+          {inputMode === "upload" ? (
+            <UploadZone
+              file={file}
+              setFile={setFile}
+              onAnalyze={analyzeContract}
+              loading={loading}
+            />
+          ) : (
+            <PasteZone
+              pastedCode={pastedCode}
+              setPastedCode={setPastedCode}
+              onAnalyze={analyzeContract}
+              loading={loading}
+            />
+          )}
+        </div>
       )}
 
       {error && (
