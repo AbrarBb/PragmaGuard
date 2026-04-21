@@ -8,9 +8,9 @@ load_dotenv()
 ETHERSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY", "")
 
 NETWORKS = {
-    "ethereum": "https://api.etherscan.io/api",
-    "bsc": "https://api.bscscan.com/api",
-    "polygon": "https://api.polygonscan.com/api"
+    "ethereum": 1,
+    "bsc": 56,
+    "polygon": 137
 }
 
 def fetch_source_code(address: str, network: str = "ethereum") -> str:
@@ -21,8 +21,9 @@ def fetch_source_code(address: str, network: str = "ethereum") -> str:
     if network not in NETWORKS:
         raise ValueError(f"Unsupported network: {network}")
 
-    url = NETWORKS[network]
+    url = "https://api.etherscan.io/v2/api"
     params = {
+        "chainid": NETWORKS[network],
         "module": "contract",
         "action": "getsourcecode",
         "address": address,

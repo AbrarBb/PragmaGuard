@@ -1,13 +1,26 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { 
+  ShieldCheck, 
+  FileUp, 
+  FileText, 
+  X, 
+  Search, 
+  Lightbulb, 
+  Microscope, 
+  CheckCircle, 
+  AlertOctagon, 
+  MessageSquareQuote, 
+  AlertTriangle 
+} from "lucide-react";
 
 /* ─────────── Header ─────────── */
 function Header() {
   return (
     <header className="header">
       <div className="header-brand">
-        <div className="header-icon">🛡️</div>
+        <ShieldCheck className="header-icon" size={36} color="var(--accent-blue)" />
         <h1 className="header-title">PragmaGuard</h1>
       </div>
       <p className="header-subtitle">
@@ -49,7 +62,7 @@ function UploadZone({ file, setFile, onAnalyze, loading }) {
         onDrop={handleDrop}
         onClick={() => document.getElementById("file-input").click()}
       >
-        <span className="upload-icon">📄</span>
+        <FileUp className="upload-icon" size={48} color="var(--accent-blue)" />
         <p className="upload-label">
           {dragOver
             ? "Drop your .sol file here"
@@ -67,7 +80,7 @@ function UploadZone({ file, setFile, onAnalyze, loading }) {
 
       {file && (
         <div className="file-info">
-          <span className="file-info-icon">📋</span>
+          <FileText className="file-info-icon" size={24} color="var(--text-secondary)" />
           <div>
             <div className="file-info-name">{file.name}</div>
             <div className="file-info-size">
@@ -82,7 +95,7 @@ function UploadZone({ file, setFile, onAnalyze, loading }) {
             }}
             title="Remove file"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
       )}
@@ -92,11 +105,11 @@ function UploadZone({ file, setFile, onAnalyze, loading }) {
         disabled={!file || loading}
         onClick={onAnalyze}
       >
-        {loading ? "Analyzing…" : "🔍 Analyze Contract"}
+        {loading ? "Analyzing…" : <><Search size={18} /> Analyze Contract</>}
       </button>
 
       <div className="guide-note">
-        <span className="guide-note-icon">💡</span>
+        <Lightbulb className="guide-note-icon" size={20} color="var(--warning-color)" />
         <div className="guide-note-content">
           <p className="guide-note-title">Where to find .sol files?</p>
           <p className="guide-note-text">
@@ -144,11 +157,11 @@ function PasteZone({ pastedCode, setPastedCode, onAnalyze, loading }) {
         disabled={!pastedCode.trim() || loading}
         onClick={onAnalyze}
       >
-        {loading ? "Analyzing…" : "🔍 Analyze Code"}
+        {loading ? "Analyzing…" : <><Search size={18} /> Analyze Code</>}
       </button>
 
       <div className="guide-note">
-        <span className="guide-note-icon">💡</span>
+        <Lightbulb className="guide-note-icon" size={20} color="var(--warning-color)" />
         <div className="guide-note-content">
           <p className="guide-note-title">Where to find .sol files?</p>
           <p className="guide-note-text">
@@ -168,6 +181,55 @@ function PasteZone({ pastedCode, setPastedCode, onAnalyze, loading }) {
             . Navigate to any contract address, go to the{" "}
             <strong>Contract</strong> tab, and look for the{" "}
             <strong>Contract Source Code</strong> section. Copy the code and paste it here.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────── Address Zone ─────────── */
+function AddressZone({ address, setAddress, network, setNetwork, onAnalyze, loading }) {
+  return (
+    <div className="glass-card">
+      <div className="address-zone">
+        <div className="address-inputs">
+          <select 
+            className="network-select" 
+            value={network} 
+            onChange={(e) => setNetwork(e.target.value)}
+            disabled={loading}
+          >
+            <option value="ethereum">Ethereum (Etherscan)</option>
+            <option value="bsc">BNB Chain (BscScan)</option>
+            <option value="polygon">Polygon (PolygonScan)</option>
+          </select>
+          <input
+            type="text"
+            className="address-input"
+            placeholder="0x..."
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            disabled={loading}
+            spellCheck="false"
+          />
+        </div>
+      </div>
+
+      <button
+        className="btn-primary"
+        disabled={!address.trim() || loading}
+        onClick={onAnalyze}
+      >
+        {loading ? "Fetching & Analyzing…" : <><Search size={18} /> Fetch & Analyze</>}
+      </button>
+
+      <div className="guide-note">
+        <Lightbulb className="guide-note-icon" size={20} color="var(--warning-color)" />
+        <div className="guide-note-content">
+          <p className="guide-note-title">How does this work?</p>
+          <p className="guide-note-text">
+            Enter a smart contract address. The backend will automatically fetch the verified source code from the selected block explorer and run it through the ML pipeline. If the contract is <strong>NOT VERIFIED</strong>, it will be immediately flagged as high risk.
           </p>
         </div>
       </div>
@@ -196,7 +258,9 @@ const FLAG_LABELS = {
 function BehaviorGrid({ flags }) {
   return (
     <div className="behavior-section">
-      <h3 className="section-title">🔬 Behavior Analysis Flags</h3>
+      <h3 className="section-title">
+        <Microscope size={20} color="var(--accent-blue)" /> Behavior Analysis Flags
+      </h3>
       <div className="behavior-grid">
         {Object.entries(flags).map(([key, val]) => {
           const isFlagged = val > 0;
@@ -230,7 +294,9 @@ function ResultCard({ result, onReset }) {
       <div className="glass-card">
         {/* Risk badge */}
         <div className={`risk-badge ${cls}`}>
-          <span className="risk-icon">{isSafe ? "✅" : "🚨"}</span>
+          <span className="risk-icon">
+            {isSafe ? <CheckCircle size={24} /> : <AlertOctagon size={24} />}
+          </span>
           <span className="risk-label">
             {isSafe ? "SAFE" : "RUGPULL RISK"}
           </span>
@@ -274,7 +340,9 @@ function ResultCard({ result, onReset }) {
         {/* Intent snippet */}
         {result.intent_snippet && (
           <div className="intent-section">
-            <h3 className="section-title">💬 Extracted Intent Text</h3>
+            <h3 className="section-title">
+              <MessageSquareQuote size={20} color="var(--accent-blue)" /> Extracted Intent Text
+            </h3>
             <div className="intent-content">{result.intent_snippet}</div>
           </div>
         )}
@@ -289,9 +357,11 @@ function ResultCard({ result, onReset }) {
 
 /* ─────────── Main Page ─────────── */
 export default function Home() {
-  const [inputMode, setInputMode] = useState("upload"); // "upload" | "paste"
+  const [inputMode, setInputMode] = useState("upload"); // "upload" | "paste" | "address"
   const [file, setFile] = useState(null);
   const [pastedCode, setPastedCode] = useState("");
+  const [address, setAddress] = useState("");
+  const [network, setNetwork] = useState("ethereum");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -299,6 +369,7 @@ export default function Home() {
   const analyzeContract = async () => {
     if (inputMode === "upload" && !file) return;
     if (inputMode === "paste" && !pastedCode.trim()) return;
+    if (inputMode === "address" && !address.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -313,13 +384,21 @@ export default function Home() {
           method: "POST",
           body: form,
         });
-      } else {
+      } else if (inputMode === "paste") {
         res = await fetch("/api/predict_text", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ source_code: pastedCode }),
+        });
+      } else {
+        res = await fetch("/api/predict_address", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ address, network }),
         });
       }
 
@@ -340,6 +419,7 @@ export default function Home() {
   const reset = () => {
     setFile(null);
     setPastedCode("");
+    setAddress("");
     setResult(null);
     setError(null);
   };
@@ -375,6 +455,12 @@ export default function Home() {
             >
               Paste Code
             </button>
+            <button
+              className={`tab-btn ${inputMode === "address" ? "active" : ""}`}
+              onClick={() => setInputMode("address")}
+            >
+              Fetch Address
+            </button>
           </div>
           
           {inputMode === "upload" ? (
@@ -384,10 +470,19 @@ export default function Home() {
               onAnalyze={analyzeContract}
               loading={loading}
             />
-          ) : (
+          ) : inputMode === "paste" ? (
             <PasteZone
               pastedCode={pastedCode}
               setPastedCode={setPastedCode}
+              onAnalyze={analyzeContract}
+              loading={loading}
+            />
+          ) : (
+            <AddressZone
+              address={address}
+              setAddress={setAddress}
+              network={network}
+              setNetwork={setNetwork}
               onAnalyze={analyzeContract}
               loading={loading}
             />
@@ -397,7 +492,7 @@ export default function Home() {
 
       {error && (
         <div className="error-box">
-          <span>⚠️</span>
+          <AlertTriangle size={20} color="var(--error-color)" />
           <span>{error}</span>
         </div>
       )}
