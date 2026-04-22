@@ -103,7 +103,7 @@ cd frontend
 npm install
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000).
+Open [PragmaGuard](https://huggingface.co/spaces/aklajim/PragmaGuard).
 
 ---
 
