@@ -471,26 +471,39 @@ body {
 }
 
 .btn-secondary {
-  width: 100%;
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  width: fit-content;
+  min-width: 240px;
+  margin: 32px auto 0;
+  padding: 12px 28px;
+  background: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: 99px;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .btn-secondary:hover {
+  background: var(--bg-secondary);
   border-color: var(--accent-blue);
-  color: var(--text-primary);
+  color: var(--accent-blue);
+  box-shadow: 0 4px 20px rgba(30, 64, 175, 0.1);
+  transform: translateY(-2px);
+}
+
+.btn-secondary svg {
+  transition: transform 0.3s ease;
+}
+
+.btn-secondary:hover svg {
+  transform: translateX(-4px);
 }
 
 /* ── Loading spinner ────────────────────────────────────────── */

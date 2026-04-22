@@ -18,7 +18,8 @@ import {
   Layers,
   Download,
   Sun,
-  Moon
+  Moon,
+  ArrowLeft
 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -528,7 +529,7 @@ function ResultCard({ result, onReset }) {
           {downloading ? "Generating PDF..." : <><Download size={18} /> Download PDF Report</>}
         </button>
         <button className="btn-secondary" onClick={onReset}>
-          ← Analyze Another Contract
+          <ArrowLeft size={18} /> Analyze Another Contract
         </button>
       </div>
     </div>
