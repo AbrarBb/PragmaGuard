@@ -1,32 +1,37 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { 
-  ShieldCheck, 
-  FileUp, 
-  FileText, 
-  X, 
-  Search, 
-  Lightbulb, 
-  Microscope, 
-  CheckCircle, 
-  AlertOctagon, 
-  MessageSquareQuote, 
+import { useState, useCallback, useEffect } from "react";
+import {
+  ShieldCheck,
+  FileUp,
+  FileText,
+  X,
+  Search,
+  Lightbulb,
+  Microscope,
+  CheckCircle,
+  AlertOctagon,
+  MessageSquareQuote,
   AlertTriangle,
   Users,
   BarChart3,
   Layers,
-  Download
+  Download,
+  Sun,
+  Moon
 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 /* ─────────── Header ─────────── */
-function Header() {
+function Header({ theme, toggleTheme }) {
   return (
     <header className="header">
+      <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme">
+        {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+      </button>
       <div className="header-brand">
-        <ShieldCheck className="header-icon" size={36} color="var(--accent-blue)" />
+        <img src="/logo.png?v=2" alt="PragmaGuard Logo" className="header-logo" />
         <h1 className="header-title">PragmaGuard</h1>
       </div>
       <p className="header-subtitle">
@@ -200,9 +205,9 @@ function AddressZone({ address, setAddress, network, setNetwork, onAnalyze, load
     <div className="glass-card">
       <div className="address-zone">
         <div className="address-inputs">
-          <select 
-            className="network-select" 
-            value={network} 
+          <select
+            className="network-select"
+            value={network}
             onChange={(e) => setNetwork(e.target.value)}
             disabled={loading}
           >
@@ -265,7 +270,7 @@ function BehaviorGrid({ flags }) {
   return (
     <div className="behavior-section">
       <h3 className="section-title">
-        <Microscope size={20} color="var(--accent-blue)" /> Behavior Analysis Flags
+        <Microscope size={22} className="section-title-icon" /> Behavior Analysis Flags
       </h3>
       <div className="behavior-grid">
         {Object.entries(flags).map(([key, val]) => {
@@ -294,7 +299,7 @@ function generateExplanation(result) {
   const isSafe = result.prediction === "safe";
   const confidence = result.confidence;
   const flags = Object.keys(result.behavior_flags || {}).filter(k => result.behavior_flags[k] > 0);
-  
+
   if (result.model_used && result.model_used.includes("Heuristic")) {
     return "This contract was immediately flagged because its source code is NOT VERIFIED on the blockchain explorer. Unverified contracts are extremely high risk as their underlying logic is hidden.";
   }
@@ -327,7 +332,7 @@ function EnsembleSection({ ensemble }) {
   return (
     <div className="ensemble-section">
       <h3 className="section-title">
-        <Layers size={20} color="var(--accent-blue)" /> Ensemble Model Breakdown
+        <Layers size={22} className="section-title-icon" /> Ensemble Model Breakdown
       </h3>
 
       {/* Individual Model Predictions Table */}
@@ -418,11 +423,11 @@ function ResultCard({ result, onReset }) {
   const handleDownloadPDF = async () => {
     const element = document.getElementById("report-content");
     if (!element) return;
-    
+
     setDownloading(true);
     try {
-      const canvas = await html2canvas(element, { 
-        scale: 2, 
+      const canvas = await html2canvas(element, {
+        scale: 2,
         backgroundColor: "#000000",
         windowWidth: element.scrollWidth,
         windowHeight: element.scrollHeight,
@@ -430,13 +435,13 @@ function ResultCard({ result, onReset }) {
         useCORS: true
       });
       const imgData = canvas.toDataURL("image/png");
-      
+
       const pdfWidth = 210; // A4 width in mm
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
+
       // Create a PDF with a custom height to fit the entire content on one page
       const pdf = new jsPDF("p", "mm", [pdfWidth, pdfHeight]);
-      
+
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`PragmaGuard_Report_${result.filename.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
     } catch (err) {
@@ -515,8 +520,8 @@ function ResultCard({ result, onReset }) {
       </div>
 
       <div className="result-actions">
-        <button 
-          className="btn-primary" 
+        <button
+          className="btn-primary"
           onClick={handleDownloadPDF}
           disabled={downloading}
         >
@@ -532,6 +537,7 @@ function ResultCard({ result, onReset }) {
 
 /* ─────────── Main Page ─────────── */
 export default function Home() {
+  const [theme, setTheme] = useState('dark');
   const [inputMode, setInputMode] = useState("upload"); // "upload" | "paste" | "address"
   const [file, setFile] = useState(null);
   const [pastedCode, setPastedCode] = useState("");
@@ -540,6 +546,21 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.body.setAttribute('data-theme', savedTheme);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.body.setAttribute('data-theme', newTheme);
+  };
 
   const analyzeContract = async () => {
     if (inputMode === "upload" && !file) return;
@@ -601,7 +622,7 @@ export default function Home() {
 
   return (
     <div className="app-container">
-      <Header />
+      <Header theme={theme} toggleTheme={toggleTheme} />
 
       {loading ? (
         <div className="glass-card">
@@ -637,7 +658,7 @@ export default function Home() {
               Fetch Address
             </button>
           </div>
-          
+
           {inputMode === "upload" ? (
             <UploadZone
               file={file}
@@ -673,7 +694,39 @@ export default function Home() {
       )}
 
       <footer className="footer">
-        PragmaGuard — Intent–Behavior Deviation Analysis for Smart Contract Security
+        <div className="footer-content">
+          <p className="footer-title">
+            © 2026 <strong>PragmaGuard</strong>
+          </p>
+
+          <div className="footer-actions">
+            <a
+              href="https://github.com/AbrarBb/PragmaGuard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="github-button"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="github-icon"
+              >
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577
+          0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.333-1.754-1.333-1.754
+          -1.089-.745.082-.729.082-.729 1.205.085 1.84 1.236 1.84 1.236 1.07 1.835 2.807 1.305
+          3.492.998.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.332-5.466-5.93
+          0-1.31.468-2.38 1.235-3.22-.123-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23
+          .957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.29-1.552 3.296-1.23
+          3.296-1.23.653 1.653.241 2.873.118 3.176.77.84 1.233 1.91 1.233 3.22
+          0 4.61-2.804 5.624-5.475 5.921.43.372.823 1.102.823 2.222
+          0 1.606-.015 2.898-.015 3.293 0 .322.216.694.825.576C20.565 21.795 24 17.295 24 12
+          24 5.37 18.63 0 12 0z" />
+              </svg>
+              <span>View Repository</span>
+            </a>
+          </div>
+        </div>
       </footer>
     </div>
   );
