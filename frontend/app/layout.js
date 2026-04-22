@@ -1,9 +1,12 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "PragmaGuard — Smart Contract Rugpull Detector",
+  title: "PragmaGuard",
   description:
-    "Upload a Solidity smart contract to analyze rug-pull risk using ML-powered intent-behavior deviation analysis. Powered by Sentence-BERT embeddings and behavioral heuristics.",
+    "Advanced Smart Contract Rugpull Detection & Forensic Analysis using ML-powered intent-behavior deviation analysis.",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }) {
