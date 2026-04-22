@@ -3,9 +3,11 @@ import "./globals.css";
 export const metadata = {
   title: "PragmaGuard",
   description:
-    "Advanced Smart Contract Rugpull Detection & Forensic Analysis using ML-powered intent-behavior deviation analysis.",
+    "Smart Contract Rugpull Detection & Forensic Analysis using ML-powered intent-behavior deviation analysis.",
   icons: {
     icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
