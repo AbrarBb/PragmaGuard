@@ -4,24 +4,33 @@
 
 PragmaGuard provides an instant rugpull risk assessment for Solidity (`.sol`) smart contracts using a 3-layer MLP neural network trained on 3,300+ verified contracts.
 
-## Key Features
+## ✨ Features
 
-1. **Upload File**: Analyze a local `.sol` file.
-2. **Paste Code**: Paste raw Solidity source code directly into the UI.
-3. **Fetch Address**: Instantly fetch and analyze verified source code from Etherscan, BscScan, or PolygonScan using a contract address. Instantly flags unverified contracts as High Risk.
-4. **Professional UI**: Premium dark theme interface built with Next.js and Lucide React icons.
+- **Multi-Modal Analysis**: Drag & drop `.sol` files, paste raw code, or fetch directly from Ethereum, BSC, or Polygon block explorers.
+- **On-Chain Forensics (Etherscan V2)**: Connects to block explorers to fetch verified source code automatically.
+- **Unverified Contract Heuristics**: Instantly flags contracts lacking verified source code as high-risk (99.9% confidence) without needing ML analysis.
+- **Multi-Model Ensemble Intelligence**:
+  - **Tier-1**: Classical ML (Random Forest) for robust baseline detection.
+  - **Tier-2**: 3-Layer MLP for complex non-linear pattern recognition.
+  - **Tier-3**: 5-Layer Deep MLP for deep feature interaction analysis.
+  - **Ensemble Combinations**: Provides Majority Voting, Weighted Average (by F1 score), and individual model breakdowns.
+- **Intent–Behavior Deviation Engine**: Extracts and encodes developer intent (via NatSpec/comments) using `Sentence-BERT` and compares it against actual behavioral flags.
+- **Professional UI**: A sleek, dark-themed, glassmorphic interface built with Next.js, featuring responsive layouts and `lucide-react` SVG icons.
 
-## Architecture
+---
 
-```
-Frontend (Next.js :3000)  →  API Proxy  →  Backend (FastAPI :8000)
-                                              ├── pipeline.py     (SBERT + regex features)
-                                              ├── model_loader.py (MLP3Layer inference)
-                                              ├── etherscan.py    (API V2 Client)
-                                              └── models/
-                                                    ├── mlp_best_model.pt  (Tier-2 MLP)
-                                                    └── scaler.joblib      (StandardScaler)
-```
+## 🧠 Technical Architecture
+
+**Backend (FastAPI & PyTorch)**
+- `main.py`: REST API endpoints (`/api/predict`, `/api/predict_text`, `/api/predict_address`).
+- `etherscan.py`: Multi-chain source code fetching using Etherscan V2 API.
+- `pipeline.py`: Feature extraction (398-d vector) combining SBERT embeddings (384-d) and behavioral flags (14-d).
+- `model_loader.py`: Ensemble model management, loading scikit-learn and PyTorch models, and computing majority vote / weighted average.
+- `models/`: Contains the pre-trained `scaler.joblib`, `best_model_verified_full.joblib` (RF), `mlp_best_model.pt`, and `deep_mlp_best_model.pt`.
+
+**Frontend (Next.js & React)**
+- `app/page.js`: Main application logic, tab-based input routing, and comprehensive result rendering with an Ensemble Model Breakdown.
+- `app/globals.css`: Premium dark mode CSS with custom tokens, mesh gradients, and glassmorphic card designs.
 
 ## How It Works
 

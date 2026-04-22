@@ -12,8 +12,14 @@ import {
   CheckCircle, 
   AlertOctagon, 
   MessageSquareQuote, 
-  AlertTriangle 
+  AlertTriangle,
+  Users,
+  BarChart3,
+  Layers,
+  Download
 } from "lucide-react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 /* ─────────── Header ─────────── */
 function Header() {
@@ -283,15 +289,166 @@ function BehaviorGrid({ flags }) {
   );
 }
 
+/* ─────────── Explanation Generator ─────────── */
+function generateExplanation(result) {
+  const isSafe = result.prediction === "safe";
+  const confidence = result.confidence;
+  const flags = Object.keys(result.behavior_flags || {}).filter(k => result.behavior_flags[k] > 0);
+  
+  if (result.model_used && result.model_used.includes("Heuristic")) {
+    return "This contract was immediately flagged because its source code is NOT VERIFIED on the blockchain explorer. Unverified contracts are extremely high risk as their underlying logic is hidden.";
+  }
+
+  let explanation = `The multi-model ensemble predicts this contract is ${isSafe ? 'SAFE' : 'a RUGPULL RISK'} with ${confidence} confidence. `;
+
+  if (!isSafe) {
+    if (flags.length > 0) {
+      explanation += `The analysis identified ${flags.length} high-risk behavioral flag(s): ${flags.map(f => FLAG_LABELS[f] || f).join(', ')}. `;
+      explanation += `The intent extracted from the developer's comments strongly deviates from the actual operations performed by the code.`;
+    } else {
+      explanation += `Although no explicit malicious behavioral flags were matched by regular expressions, the deep learning models detected anomalous structural patterns that typically indicate hidden rugpull mechanisms.`;
+    }
+  } else {
+    if (flags.length > 0) {
+      explanation += `Despite identifying some potentially sensitive functions (${flags.map(f => FLAG_LABELS[f] || f).join(', ')}), the ensemble model determined that their usage is benign and matches the stated developer intent, classifying the overall contract as safe.`;
+    } else {
+      explanation += `No malicious behavioral flags were detected, and the code structure aligns perfectly with standard, safe contract templates.`;
+    }
+  }
+  return explanation;
+}
+
+/* ─────────── Ensemble Section ─────────── */
+function EnsembleSection({ ensemble }) {
+  if (!ensemble) return null;
+
+  const { individual_predictions, majority_vote, weighted_average } = ensemble;
+
+  return (
+    <div className="ensemble-section">
+      <h3 className="section-title">
+        <Layers size={20} color="var(--accent-blue)" /> Ensemble Model Breakdown
+      </h3>
+
+      {/* Individual Model Predictions Table */}
+      <div className="ensemble-subsection">
+        <h4 className="ensemble-subtitle">
+          <Users size={16} color="var(--text-secondary)" /> Individual Model Predictions
+        </h4>
+        <div className="ensemble-table">
+          <div className="ensemble-table-header">
+            <span className="ensemble-col-model">Model</span>
+            <span className="ensemble-col-verdict">Verdict</span>
+            <span className="ensemble-col-prob">Probability</span>
+            <span className="ensemble-col-conf">Confidence</span>
+          </div>
+          {individual_predictions.map((pred, idx) => {
+            const predCls = pred.label === "safe" ? "safe" : "rugpull";
+            return (
+              <div key={idx} className="ensemble-table-row">
+                <span className="ensemble-col-model">{pred.model_name}</span>
+                <span className={`ensemble-col-verdict ensemble-verdict-${predCls}`}>
+                  {pred.label === "safe" ? (
+                    <><CheckCircle size={14} /> SAFE</>
+                  ) : (
+                    <><AlertOctagon size={14} /> RUGPULL</>
+                  )}
+                </span>
+                <span className="ensemble-col-prob">
+                  {(pred.prob * 100).toFixed(1)}%
+                </span>
+                <span className={`ensemble-col-conf confidence-badge-${pred.confidence}`}>
+                  {pred.confidence.toUpperCase()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Majority Vote and Weighted Average side by side */}
+      <div className="ensemble-strategies">
+        <div className="ensemble-strategy-card">
+          <h4 className="ensemble-subtitle">
+            <Users size={16} color="var(--text-secondary)" /> Majority Vote
+          </h4>
+          <div className={`ensemble-strategy-result ${majority_vote.label === "safe" ? "safe" : "rugpull"}`}>
+            <span className="ensemble-strategy-label">
+              {majority_vote.label === "safe" ? (
+                <><CheckCircle size={18} /> SAFE</>
+              ) : (
+                <><AlertOctagon size={18} /> RUGPULL</>
+              )}
+            </span>
+            <span className="ensemble-strategy-detail">
+              Agreement: {majority_vote.agreement}
+            </span>
+          </div>
+        </div>
+
+        <div className="ensemble-strategy-card">
+          <h4 className="ensemble-subtitle">
+            <BarChart3 size={16} color="var(--text-secondary)" /> Weighted Average
+          </h4>
+          <div className={`ensemble-strategy-result ${weighted_average.label === "safe" ? "safe" : "rugpull"}`}>
+            <span className="ensemble-strategy-label">
+              {weighted_average.label === "safe" ? (
+                <><CheckCircle size={18} /> SAFE</>
+              ) : (
+                <><AlertOctagon size={18} /> RUGPULL</>
+              )}
+            </span>
+            <span className="ensemble-strategy-detail">
+              {(weighted_average.prob * 100).toFixed(1)}% — {weighted_average.confidence.toUpperCase()}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─────────── Result Card ─────────── */
 function ResultCard({ result, onReset }) {
+  const [downloading, setDownloading] = useState(false);
   const isSafe = result.prediction === "safe";
   const cls = isSafe ? "safe" : "rugpull";
   const probPercent = (result.probability * 100).toFixed(1);
 
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById("report-content");
+    if (!element) return;
+    
+    setDownloading(true);
+    try {
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        backgroundColor: "#000000",
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        scrollY: -window.scrollY,
+        useCORS: true
+      });
+      const imgData = canvas.toDataURL("image/png");
+      
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      // Create a PDF with a custom height to fit the entire content on one page
+      const pdf = new jsPDF("p", "mm", [pdfWidth, pdfHeight]);
+      
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`PragmaGuard_Report_${result.filename.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+    } catch (err) {
+      console.error("Failed to generate PDF", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="result-section">
-      <div className="glass-card">
+      <div className="glass-card" id="report-content">
         {/* Risk badge */}
         <div className={`risk-badge ${cls}`}>
           <span className="risk-icon">
@@ -325,28 +482,46 @@ function ResultCard({ result, onReset }) {
             </span>
           </div>
           <div className="meta-chip">
-            <span className="meta-chip-label">Model:</span>
-            <span className="meta-chip-value">{result.model_used}</span>
-          </div>
-          <div className="meta-chip">
             <span className="meta-chip-label">File:</span>
             <span className="meta-chip-value">{result.filename}</span>
           </div>
         </div>
 
+        {/* Ensemble Breakdown */}
+        {result.ensemble && <EnsembleSection ensemble={result.ensemble} />}
+
         {/* Behavior flags */}
-        <BehaviorGrid flags={result.behavior_flags} />
+        {result.behavior_flags && Object.keys(result.behavior_flags).length > 0 && (
+          <BehaviorGrid flags={result.behavior_flags} />
+        )}
+
+        {/* Detailed Explanation */}
+        <div className="explanation-section">
+          <h3 className="section-title">
+            <ShieldCheck size={20} color="var(--text-primary)" /> Detailed Breakdown
+          </h3>
+          <p className="explanation-text">{generateExplanation(result)}</p>
+        </div>
 
         {/* Intent snippet */}
         {result.intent_snippet && (
           <div className="intent-section">
             <h3 className="section-title">
-              <MessageSquareQuote size={20} color="var(--accent-blue)" /> Extracted Intent Text
+              <MessageSquareQuote size={20} color="var(--text-primary)" /> Extracted Intent Text
             </h3>
             <div className="intent-content">{result.intent_snippet}</div>
           </div>
         )}
+      </div>
 
+      <div className="result-actions">
+        <button 
+          className="btn-primary" 
+          onClick={handleDownloadPDF}
+          disabled={downloading}
+        >
+          {downloading ? "Generating PDF..." : <><Download size={18} /> Download PDF Report</>}
+        </button>
         <button className="btn-secondary" onClick={onReset}>
           ← Analyze Another Contract
         </button>
