@@ -1,4 +1,4 @@
-# 🛡️ PragmaGuard
+#  PragmaGuard
 
 **Forensic Smart Contract Rugpull Detection** powered by ML-based intent–behavior deviation analysis.
 
@@ -6,7 +6,7 @@ PragmaGuard provides an instant rugpull risk assessment for Solidity (`.sol`) sm
 
 ![PragmaGuard Banner](https://github.com/AbrarBb/PragmaGuard/raw/main/frontend/public/logo.png)
 
-## ✨ Key Features
+##  Key Features
 
 -   **Multi-Modal Analysis**: Drag & drop `.sol` files, paste raw code, or fetch directly from Ethereum, BSC, or Polygon block explorers.
 -   **On-Chain Forensics (Etherscan V2)**: Connects to block explorers to fetch verified source code automatically for deep inspection.
@@ -21,7 +21,7 @@ PragmaGuard provides an instant rugpull risk assessment for Solidity (`.sol`) sm
 
 ---
 
-## 🚀 How to Use PragmaGuard
+##  How to Use PragmaGuard
 
 ### 1. Choose Your Input Method
 PragmaGuard offers three ways to analyze a contract:
@@ -46,7 +46,7 @@ Click **"Download PDF Report"** to generate a professional audit document you ca
 
 ---
 
-## 🧠 Technical Architecture
+##  Technical Architecture
 
 ### How This Tool Was Made
 
@@ -69,7 +69,7 @@ The UI was meticulously crafted using **Vanilla CSS** with a custom Slate/Navy t
 
 ---
 
-## 📈 Model Performance
+##  Model Performance
 
 | Metric     | Random Forest | MLP 3-Layer | Deep MLP 5-Layer |
 |------------|---------------|-------------|------------------|
@@ -78,7 +78,7 @@ The UI was meticulously crafted using **Vanilla CSS** with a custom Slate/Navy t
 
 ---
 
-## 🛠️ Installation & Setup
+##  Installation & Setup
 
 ### 1. Backend Setup
 ```bash
@@ -107,8 +107,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 📜 Dataset Reference
+##  Dataset Reference
 Based on the [Intent-Behavior Deviation Dataset](https://github.com/AbrarBb/Intent-Behavior-Deviation-Dataset) research project.
 
-## ⚖️ License
+##  License
 MIT License - Developed by **Abrar**
